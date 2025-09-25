@@ -1,0 +1,21 @@
+Django Project Guide
+===================
+
+Database:
+---------
+You selected SQLite.
+Migrations were run automatically.
+
+Superuser:
+----------
+To create a superuser, activate your virtual environment:
+source hani/venv/bin/activate
+Then run:
+python manage.py createsuperuser
+
+Additional Notes:
+-----------------
+- Only essential packages were installed during setup.
+- Other useful packages are listed in requirements.txt.
+- To install them, run:
+pip install -r requirements.txt
