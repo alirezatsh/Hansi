@@ -2,6 +2,9 @@ Django Project Guide - SQLite with Docker
 
 Database:
 You selected SQLite.
+The database file will be created automatically inside the project.
+
+
 A Docker container has been created and is running your Django project.
 
 The application is accessible at:

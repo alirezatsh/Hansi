@@ -1,0 +1,35 @@
+Docker Compose + Django Project Guide
+
+Docker Setup:
+You have the Dockerfile and docker-compose.yml.
+Make sure Docker and Docker Compose are installed and running on your system.
+
+Run the project with Docker Compose:
+To build and start all services in detached mode, run:
+  docker-compose up -d --build
+
+Database:
+If you are using PostgreSQL:
+  No migrations were run automatically.
+  Make sure your PostgreSQL server is running.
+  Update your .env with correct DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT.
+  After the DB is ready, run:
+    python manage.py migrate
+
+If you are using Sqlite:
+  The database file will be created automatically inside the project.
+
+Activate your virtual environment:
+Linux/macOS:
+  source ./venv/bin/activate
+Windows:
+  .\venv\Scripts\activate
+
+Create superuser:
+  python manage.py createsuperuser
+
+Run server:
+you can run your app like normal way:
+  python manage.py runserver
+Or you can build the dockerfile:
+  docker build -t <your-image-name> .

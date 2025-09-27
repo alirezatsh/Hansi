@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Colors for echo
 GREEN="\033[0;32m"
 YELLOW="\033[1;33m"
 RED="\033[0;31m"
@@ -12,10 +11,9 @@ DB_TYPE=${2:-sqlite}
 DOCKERFILE=${3:-n}
 DOCKER_COMPOSE=${4:-n}
 SUPERUSER=${5:-n}
-OS_TYPE=${6:-linux}
 
 if [ -z "$PROJECT_NAME" ]; then
-  echo -e "${RED}Usage: $0 PROJECT_NAME [sqlite|postgres] [dockerfile y/n] [docker_compose y/n] [superuser y/n] [os_type]${RESET}"
+  echo -e "${RED}Usage: $0 PROJECT_NAME [sqlite|postgres] [dockerfile y/n] [docker_compose y/n] [superuser y/n]${RESET}"
   exit 1
 fi
 
@@ -24,105 +22,20 @@ if [ -d "$PROJECT_NAME" ]; then
   exit 1
 fi
 
-# --------------------------- Create project and virtualenv ---------------------------
+PROJECT_DIR="$(pwd)/$PROJECT_NAME"
 
 echo -e "${GREEN}Creating project directory and virtual environment...${RESET}"
 mkdir -p "$PROJECT_NAME"
 python3 -m venv "$PROJECT_NAME/venv"
 
-# --------------------------- Activate virtual environment ---------------------------
-
 echo -e "${GREEN}Activating virtual environment...${RESET}"
-if [ "$OS_TYPE" = "windows" ]; then
-  cd "$PROJECT_NAME/venv/Scripts"
-  .\activate
-  cd ../../../
-else
-  source "$PROJECT_NAME/venv/bin/activate"
-fi
+source "$PROJECT_NAME/venv/bin/activate"
 
-# --------------------------- Install Python packages # ---------------------------
-
-echo -e "${GREEN}Installing required Python packages...${RESET}"
-pip install --upgrade pip
-pip install django djangorestframework psycopg2-binary celery python-dotenv
-
-# --------------------------- Start Django project ---------------------------
-echo -e "${GREEN}Starting Django project...${RESET}"
-django-admin startproject "$PROJECT_NAME" "$PROJECT_NAME"
-cd "$PROJECT_NAME" || exit 1
-
-SETTINGS_FILE="$PROJECT_NAME/settings.py"
-
-# --------------------------- Configure PostgreSQL if selected ---------------------------
-
-if [ "$DB_TYPE" = "postgres" ]; then
-  echo -e "${YELLOW}Configuring PostgreSQL settings...${RESET}"
-  cat >> "$SETTINGS_FILE" <<'PY'
-
-import os
-from dotenv import load_dotenv
-load_dotenv(os.path.join(BASE_DIR, ".env"))
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME', 'PROJECT_DB'),
-        'USER': os.environ.get('DB_USER', 'postgres'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
-    }
-}
-PY
-
-  cat > .env <<EOL
-DB_NAME=${PROJECT_NAME}_db
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_HOST=localhost
-DB_PORT=5432
-EOL
-fi
-
-# --------------------------- Copy guide files ---------------------------
-
-GUIDE_DIR="../guides"
-echo -e "${GREEN}Copying guide file...${RESET}"
-if [ "$DB_TYPE" = "sqlite" ] && [ "$DOCKERFILE" != "y" ]; then
-  cp "$GUIDE_DIR/with-sqlite/guide.txt" guide.txt
-elif [ "$DB_TYPE" = "postgres" ]; then
-  cp "$GUIDE_DIR/with-postgres/guide.txt" guide.txt
-elif [ "$DB_TYPE" = "sqlite" ] && [ "$DOCKERFILE" = "y" ]; then
-  cp "$GUIDE_DIR/with-sqlite-dockerfile/guide.txt" guide.txt
-fi
-
-# --------------------------- Run migrations for SQLite ---------------------------
-
-if [ "$DB_TYPE" = "sqlite" ] && [ "$DOCKERFILE" != "y" ]; then
-  echo -e "${GREEN}Running migrations for SQLite...${RESET}"
-  python manage.py migrate
-fi
-
-# --------------------------- Create .gitignore ---------------------------
-
-echo -e "${GREEN}Creating .gitignore...${RESET}"
-cat > .gitignore <<'PY'
-*.pyc
-__pycache__/
-venv/
-db.sqlite3
-*.log
-.env
-PY
-
-# --------------------------- Create requirements.txt ---------------------------
-
-echo -e "${GREEN}Creating requirements.txt...${RESET}"
-cat > requirements.txt <<'PY'
+# Create requirements.txt with essential packages for Django project 
+cat > "$PROJECT_DIR/requirements.txt" <<PY
 Django==4.2.24
-psycopg2-binary==2.9.10
 djangorestframework==3.16.1
+psycopg2-binary==2.9.10
 celery==5.5.3
 django-celery-results==2.5.1
 django-celery-beat==2.6.0
@@ -141,43 +54,101 @@ pytest-django==4.8.0
 python-dotenv==1.0.1
 PY
 
-# --------------------------- Dockerfile section ---------------------------
+echo -e "${GREEN}Installing required Python packages from requirements.txt...${RESET}"
+python -m pip install --upgrade pip
+python -m pip install --no-cache-dir -r "$PROJECT_DIR/requirements.txt"
 
-if [ "$DOCKERFILE" = "y" ]; then
-  echo -e "${GREEN}Creating Dockerfile...${RESET}"
-  cat > Dockerfile <<'PY'
+echo -e "${GREEN}Starting Django project...${RESET}"
+django-admin startproject "$PROJECT_NAME" "$PROJECT_NAME"
+cd "$PROJECT_DIR" || exit 1
+
+SETTINGS_FILE="$PROJECT_DIR/$PROJECT_NAME/settings.py"
+
+#  Append PostgreSQL database configuration to settings.py 
+if [ "$DB_TYPE" = "postgres" ]; then
+  echo -e "${YELLOW}Configuring PostgreSQL settings (no connection attempt)...${RESET}"
+  cat >> "$SETTINGS_FILE" <<'PY'
+
+import os
+from dotenv import load_dotenv
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME', 'PROJECT_DB'),
+        'USER': os.environ.get('DB_USER', 'postgres'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
+    }
+}
+PY
+fi
+
+# Generate .env file with default PostgreSQL environment variables 
+if [ ! -f "$PROJECT_DIR/.env" ]; then
+  cat > "$PROJECT_DIR/.env" <<EOL
+DB_NAME=${PROJECT_NAME}_db
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_HOST=db
+DB_PORT=5432
+EOL
+fi
+
+GUIDE_DIR="$(cd "$(dirname "$0")" && cd ../../guides && pwd 2>/dev/null || true)"
+
+echo -e "${GREEN}Copying guide file...${RESET}"
+
+if [ "$DOCKER_COMPOSE" = "y" ]; then
+  cp "$GUIDE_DIR/with-dockercompose/guide.txt" "$PROJECT_DIR/guide.txt" 2>/dev/null || true
+
+elif [ "$DB_TYPE" = "sqlite" ] && [ "$DOCKERFILE" != "y" ]; then
+  cp "$GUIDE_DIR/with-sqlite/guide.txt" "$PROJECT_DIR/guide.txt" 2>/dev/null || true
+
+elif [ "$DB_TYPE" = "postgres" ]; then
+  cp "$GUIDE_DIR/with-postgres/guide.txt" "$PROJECT_DIR/guide.txt" 2>/dev/null || true
+  
+elif [ "$DB_TYPE" = "sqlite" ] && [ "$DOCKERFILE" = "y" ]; then
+  cp "$GUIDE_DIR/with-sqlite-dockerfile/guide.txt" "$PROJECT_DIR/guide.txt" 2>/dev/null || true
+fi
+
+if [ "$DB_TYPE" = "sqlite" ] && [ "$DOCKERFILE" != "y" ] && [ "$DOCKER_COMPOSE" != "y" ]; then
+  echo -e "${GREEN}Running migrations for SQLite...${RESET}"
+
+# Run initial migrations automatically only if SQLite is used
+  python manage.py migrate
+else
+  echo -e "${YELLOW}Skipping migrations (PostgreSQL or Docker).${RESET}"
+fi
+
+cat > "$PROJECT_DIR/.gitignore" <<'PY'
+*.pyc
+__pycache__/
+venv/
+db.sqlite3
+*.log
+.env
+PY
+
+#  Create Dockerfile for building and running the Django app inside container 
+if [ "$DOCKERFILE" = "y" ] || [ "$DOCKER_COMPOSE" = "y" ]; then
+  cat > "$PROJECT_DIR/Dockerfile" <<'PY'
 FROM python:3.12-slim
 WORKDIR /app
-COPY ./requirements.txt /app/requirements.txt
+COPY requirements.txt /app/requirements.txt
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 COPY . /app
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 PY
-
-  if command -v docker >/dev/null 2>&1; then
-    echo -e "${GREEN}Building Docker image '${PROJECT_NAME}'...${RESET}"
-    docker build -t "${PROJECT_NAME}" .
-    EXISTING_ID=$(docker ps -a --filter "name=^/${PROJECT_NAME}$" --format '{{.ID}}' || true)
-    if [ -n "$EXISTING_ID" ]; then
-      docker rm -f "${PROJECT_NAME}" >/dev/null 2>&1 || true
-    fi
-    echo -e "${GREEN}Running Docker container '${PROJECT_NAME}'...${RESET}"
-    if [ "$DB_TYPE" = "postgres" ]; then
-      docker run -d --name "${PROJECT_NAME}" --env-file .env -p 8000:8000 "${PROJECT_NAME}"
-    else
-      docker run -d --name "${PROJECT_NAME}" -p 8000:8000 "${PROJECT_NAME}"
-    fi
-  else
-    echo -e "${RED}Docker not found, skipping docker build/run.${RESET}"
-  fi
+  echo -e "${GREEN}Dockerfile created"
 fi
 
-# --------------------------- Docker-compose section ---------------------------
-
+# Create docker-compose.yml to orchestrate Django and PostgreSQL services 
 if [ "$DOCKER_COMPOSE" = "y" ]; then
-  echo -e "${GREEN}Creating docker-compose.yml...${RESET}"
-  cat > docker-compose.yml <<EOL
-version: '3.8'
+  cat > "$PROJECT_DIR/docker-compose.yml" <<EOL
+version: "3.9"
 services:
   db:
     image: postgres:15
@@ -201,14 +172,8 @@ services:
     env_file:
       - .env
 EOL
-
-  if command -v docker-compose >/dev/null 2>&1; then
-    docker-compose up -d
-  elif command -v docker >/dev/null 2>&1; then
-    docker compose up -d
-  else
-    echo -e "${RED}docker-compose not found and docker CLI doesn't support compose. Skipping docker-compose up.${RESET}"
-  fi
+  echo -e "${GREEN}docker-compose.yml created"
 fi
 
 echo -e "${GREEN}Django project '$PROJECT_NAME' setup completed.${RESET}"
+sleep 3
