@@ -6,17 +6,6 @@ import os from 'os';
 import { fileURLToPath } from 'url';
 import inquirer from 'inquirer';
 
-function findPackageRoot(startDir: string): string | null {
-  let dir = path.resolve(startDir);
-  while (true) {
-    const pkg = path.join(dir, 'package.json');
-    if (fs.existsSync(pkg)) return dir;
-    const parent = path.dirname(dir);
-    if (parent === dir) return null;
-    dir = parent;
-  }
-}
-
 export default class DjangoInit extends Command {
   static description = 'Initialize a Django project with optional DB, Docker, and docker-compose';
 
@@ -26,37 +15,56 @@ export default class DjangoInit extends Command {
     dockercompose: Flags.boolean({ description: 'Create docker-compose.yml' }),
   };
 
+  private findScriptInAncestors(startDirs: string[], relCandidates: string[]): { found?: string; tried: string[] } {
+    const tried: string[] = [];
+
+    for (const start of startDirs) {
+      let dir = path.resolve(start);
+      while (true) {
+        for (const rel of relCandidates) {
+          const candidate = path.join(dir, rel);
+          tried.push(candidate);
+          if (fs.existsSync(candidate)) {
+            return { found: candidate, tried };
+          }
+        }
+        const parent = path.dirname(dir);
+        if (parent === dir) break;
+        dir = parent;
+      }
+    }
+
+    return { tried };
+  }
+
   locateScript(): string {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
 
-    const pkgRoot = findPackageRoot(__dirname) || findPackageRoot(process.cwd()) || null;
-
-    const candidates: string[] = [
-      path.join(process.cwd(), 'src', 'scripts', 'django', 'setup_django_local.sh'),
-      path.join(process.cwd(), 'scripts', 'django', 'setup_django_local.sh'),
+    const rels = [
+      path.join('src', 'scripts', 'django', 'setup_django_local.sh'),
+      path.join('scripts', 'django', 'setup_django_local.sh'),
+      path.join('dist', 'scripts', 'django', 'setup_django_local.sh'),
+      path.join('src', 'scripts', 'setup_django_local.sh'),
+      path.join('scripts', 'setup_django_local.sh'),
     ];
 
-    if (pkgRoot) {
-      candidates.push(
-        path.join(pkgRoot, 'src', 'scripts', 'django', 'setup_django_local.sh'),
-        path.join(pkgRoot, 'scripts', 'django', 'setup_django_local.sh'),
-        path.join(pkgRoot, 'dist', 'scripts', 'django', 'setup_django_local.sh'),
-      );
-    }
+    const startDirs = [
+      __dirname,
+      path.resolve(__dirname, '..'),
+      process.cwd(),
+      path.resolve(process.cwd(), '..'),
+    ];
 
-    candidates.push(
-      path.join(__dirname, '..', '..', 'src', 'scripts', 'django', 'setup_django_local.sh'),
-      path.join(__dirname, '..', '..', '..', '..', 'src', 'scripts', 'django', 'setup_django_local.sh'),
-      path.join(__dirname, '..', '..', '..', '..', 'scripts', 'django', 'setup_django_local.sh'),
-    );
+    const { found, tried } = this.findScriptInAncestors(startDirs, rels);
 
-    for (const c of candidates) {
-      if (fs.existsSync(c)) return c;
-    }
+    if (found) return found;
 
-    const tried = candidates.join('\n  ');
-    this.error(`setup_django_local.sh not found. Tried these locations:\n  ${tried}`);
+    const msg = [
+      'setup_django_local.sh not found. I tried these locations (most likely the package was built without scripts copied to dist or files array):',
+      ...tried.slice(0, 200), // limit to avoid huge output
+    ].join('\n  ');
+    this.error(msg);
     return '';
   }
 
