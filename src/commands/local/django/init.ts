@@ -15,24 +15,16 @@ export default class DjangoInit extends Command {
     dockercompose: Flags.boolean({ description: 'Create docker-compose.yml' }),
   };
 
-  locateScriptCandidates(): string[] {
+  locateScript(): string {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
-    return [
-      path.join(process.cwd(), 'src', 'scripts', 'django', 'setup_django_local.sh'),
-      path.join(process.cwd(), 'scripts', 'django', 'setup_django_local.sh'),
-      path.join(__dirname, '..', '..', 'src', 'scripts', 'django', 'setup_django_local.sh'),
-      path.join(__dirname, '..', '..', 'scripts', 'django', 'setup_django_local.sh'),
-    ];
-  }
 
-  findScript(): string {
-    const candidates = this.locateScriptCandidates();
-    for (const c of candidates) {
-      if (fs.existsSync(c)) return c;
+    const scriptPath = path.join(__dirname, '..', 'scripts', 'django', 'setup_django_local.sh');
+
+    if (!fs.existsSync(scriptPath)) {
+      this.error(`setup_django_local.sh not found at ${scriptPath}`);
     }
-    this.error('setup_django_local.sh not found in expected locations.');
-    return '';
+    return scriptPath;
   }
 
   runCommand(command: string, args: string[], cwd?: string) {
@@ -48,7 +40,7 @@ export default class DjangoInit extends Command {
     const projectName = answers.projectName.trim();
     if (!projectName) this.error('Project name is required.');
 
-    const scriptPath = this.findScript();
+    const scriptPath = this.locateScript();
 
     const platform = os.platform();
     let osType = 'linux';
