@@ -6,6 +6,17 @@ import os from 'os';
 import { fileURLToPath } from 'url';
 import inquirer from 'inquirer';
 
+function findPackageRoot(startDir: string): string | null {
+  let dir = path.resolve(startDir);
+  while (true) {
+    const pkg = path.join(dir, 'package.json');
+    if (fs.existsSync(pkg)) return dir;
+    const parent = path.dirname(dir);
+    if (parent === dir) return null;
+    dir = parent;
+  }
+}
+
 export default class DjangoInit extends Command {
   static description = 'Initialize a Django project with optional DB, Docker, and docker-compose';
 
@@ -19,12 +30,34 @@ export default class DjangoInit extends Command {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
 
-    const scriptPath = path.join(__dirname, '..', 'scripts', 'django', 'setup_django_local.sh');
+    const pkgRoot = findPackageRoot(__dirname) || findPackageRoot(process.cwd()) || null;
 
-    if (!fs.existsSync(scriptPath)) {
-      this.error(`setup_django_local.sh not found at ${scriptPath}`);
+    const candidates: string[] = [
+      path.join(process.cwd(), 'src', 'scripts', 'django', 'setup_django_local.sh'),
+      path.join(process.cwd(), 'scripts', 'django', 'setup_django_local.sh'),
+    ];
+
+    if (pkgRoot) {
+      candidates.push(
+        path.join(pkgRoot, 'src', 'scripts', 'django', 'setup_django_local.sh'),
+        path.join(pkgRoot, 'scripts', 'django', 'setup_django_local.sh'),
+        path.join(pkgRoot, 'dist', 'scripts', 'django', 'setup_django_local.sh'),
+      );
     }
-    return scriptPath;
+
+    candidates.push(
+      path.join(__dirname, '..', '..', 'src', 'scripts', 'django', 'setup_django_local.sh'),
+      path.join(__dirname, '..', '..', '..', '..', 'src', 'scripts', 'django', 'setup_django_local.sh'),
+      path.join(__dirname, '..', '..', '..', '..', 'scripts', 'django', 'setup_django_local.sh'),
+    );
+
+    for (const c of candidates) {
+      if (fs.existsSync(c)) return c;
+    }
+
+    const tried = candidates.join('\n  ');
+    this.error(`setup_django_local.sh not found. Tried these locations:\n  ${tried}`);
+    return '';
   }
 
   runCommand(command: string, args: string[], cwd?: string) {
