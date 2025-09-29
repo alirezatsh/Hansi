@@ -20,7 +20,7 @@ $ npm install -g hansi
 $ hansi COMMAND
 running command...
 $ hansi (--version)
-hansi/0.0.1 linux-x64 node-v24.4.0
+hansi/0.0.2 linux-x64 node-v24.4.0
 $ hansi --help [COMMAND]
 USAGE
   $ hansi COMMAND
@@ -59,7 +59,7 @@ DESCRIPTION
   Initialize a Django project with optional DB, Docker, and docker-compose
 ```
 
-_See code: [src/commands/local/django/init.ts](https://github.com/alirezatsh/Hansi/blob/v0.0.1/src/commands/local/django/init.ts)_
+_See code: [src/commands/local/django/init.ts](https://github.com/alirezatsh/Hansi/blob/v0.0.2/src/commands/local/django/init.ts)_
 
 ## `hansi plugins`
 

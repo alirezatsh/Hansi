@@ -1,7 +1,7 @@
 {
   "name": "hansi",
   "description": "This is CLI tool for setup and structuring your projects",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "alireza tashakkori",
   "bin": {
     "hansi": "./bin/run.js"
@@ -34,12 +34,12 @@
     "node": ">=18.0.0"
   },
   "files": [
-  "./bin",
-  "./dist",
-  "./scripts",
-  "./guides",
-  "./oclif.manifest.json"
-],
+    "./bin",
+    "./dist",
+    "./scripts",
+    "./guides",
+    "./oclif.manifest.json"
+  ],
   "homepage": "https://github.com/alirezatsh/Hansi#readme",
   "keywords": [
     "oclif"
