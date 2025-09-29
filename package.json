@@ -9,7 +9,6 @@
   "bugs": "https://github.com/alirezatsh/Hansi/issues",
   "dependencies": {
     "@oclif/plugin-plugins": "^5",
-    "hansi": "file:hansi-0.0.3.tgz",
     "inquirer": "^12.9.6"
   },
   "devDependencies": {
