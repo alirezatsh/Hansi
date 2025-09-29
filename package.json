@@ -33,13 +33,13 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "files": [
-    "./bin",
-    "./dist",
-    "./scripts",
-    "./guides",
-    "./oclif.manifest.json"
-  ],
+"files": [
+  "bin",
+  "dist",
+  "src/scripts",
+  "src/guides",
+  "oclif.manifest.json"
+],
   "homepage": "https://github.com/alirezatsh/Hansi#readme",
   "keywords": [
     "oclif"
