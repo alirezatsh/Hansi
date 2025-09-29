@@ -20,7 +20,7 @@ $ npm install -g hansi
 $ hansi COMMAND
 running command...
 $ hansi (--version)
-hansi/0.0.0 linux-x64 node-v24.4.0
+hansi/0.0.1 linux-x64 node-v24.4.0
 $ hansi --help [COMMAND]
 USAGE
   $ hansi COMMAND
@@ -29,9 +29,7 @@ USAGE
 <!-- usagestop -->
 # Commands
 <!-- commands -->
-* [`hansi hello PERSON`](#hansi-hello-person)
-* [`hansi hello world`](#hansi-hello-world)
-* [`hansi help [COMMAND]`](#hansi-help-command)
+* [`hansi local django init`](#hansi-local-django-init)
 * [`hansi plugins`](#hansi-plugins)
 * [`hansi plugins add PLUGIN`](#hansi-plugins-add-plugin)
 * [`hansi plugins:inspect PLUGIN...`](#hansi-pluginsinspect-plugin)
@@ -43,67 +41,25 @@ USAGE
 * [`hansi plugins unlink [PLUGIN]`](#hansi-plugins-unlink-plugin)
 * [`hansi plugins update`](#hansi-plugins-update)
 
-## `hansi hello PERSON`
+## `hansi local django init`
 
-Say hello
+Initialize a Django project with optional DB, Docker, and docker-compose
 
 ```
 USAGE
-  $ hansi hello PERSON -f <value>
-
-ARGUMENTS
-  PERSON  Person to say hello to
+  $ hansi local django init [--db sqlite|postgres|cloud] [--dockerfile] [--dockercompose]
 
 FLAGS
-  -f, --from=<value>  (required) Who is saying hello
+  --db=<option>    [default: sqlite] Database type
+                   <options: sqlite|postgres|cloud>
+  --dockercompose  Create docker-compose.yml
+  --dockerfile     Create Dockerfile
 
 DESCRIPTION
-  Say hello
-
-EXAMPLES
-  $ hansi hello friend --from oclif
-  hello friend from oclif! (./src/commands/hello/index.ts)
+  Initialize a Django project with optional DB, Docker, and docker-compose
 ```
 
-_See code: [src/commands/hello/index.ts](https://github.com/alirezatsh/Hansi/https://github.com/alirezatsh/Hansi/blob/v0.0.0/src/commands/hello/index.ts)_
-
-## `hansi hello world`
-
-Say hello world
-
-```
-USAGE
-  $ hansi hello world
-
-DESCRIPTION
-  Say hello world
-
-EXAMPLES
-  $ hansi hello world
-  hello world! (./src/commands/hello/world.ts)
-```
-
-_See code: [src/commands/hello/world.ts](https://github.com/alirezatsh/Hansi/https://github.com/alirezatsh/Hansi/blob/v0.0.0/src/commands/hello/world.ts)_
-
-## `hansi help [COMMAND]`
-
-Display help for hansi.
-
-```
-USAGE
-  $ hansi help [COMMAND...] [-n]
-
-ARGUMENTS
-  COMMAND...  Command to show help for.
-
-FLAGS
-  -n, --nested-commands  Include all nested commands in the output.
-
-DESCRIPTION
-  Display help for hansi.
-```
-
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.2.33/src/commands/help.ts)_
+_See code: [src/commands/local/django/init.ts](https://github.com/alirezatsh/Hansi/blob/v0.0.1/src/commands/local/django/init.ts)_
 
 ## `hansi plugins`
 
