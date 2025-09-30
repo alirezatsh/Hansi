@@ -1,1 +1,1 @@
-{"root":["./src/index.ts","./src/commands/local/django/init.ts"],"version":"5.9.2"}
+{"root":["./src/constants.ts","./src/index.ts","./src/commands/local/django/init.ts","./src/docker/django/run.ts","./src/interfaces/django-interfaces.ts"],"version":"5.9.2"}

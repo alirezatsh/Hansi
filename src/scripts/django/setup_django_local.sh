@@ -176,4 +176,7 @@ EOL
 fi
 
 echo -e "${GREEN}Django project '$PROJECT_NAME' setup completed.${RESET}"
+sleep 1
+echo -e "${GREEN}Project '${PROJECT_NAME}' created successfully!${RESET}"
 sleep 3
+echo -e "${GREEN}Check guide.txt for more information.${RESET}"
