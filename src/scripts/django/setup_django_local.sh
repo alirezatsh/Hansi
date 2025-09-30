@@ -52,6 +52,8 @@ factory-boy==3.3.1
 pytest==8.3.3
 pytest-django==4.8.0
 python-dotenv==1.0.1
+boto3==1.40.42
+Pillow==11.3.0
 PY
 
 echo -e "${GREEN}Installing required Python packages from requirements.txt...${RESET}"
@@ -97,7 +99,7 @@ DB_PORT=5432
 EOL
 fi
 
-GUIDE_DIR="$(cd "$(dirname "$0")" && cd ../../guides && pwd 2>/dev/null || true)"
+GUIDE_DIR="$(cd "$(dirname "$0")" && cd ../../django/guides && pwd 2>/dev/null || true)"
 
 echo -e "${GREEN}Copying guide file...${RESET}"
 
