@@ -87,7 +87,7 @@ export default class DjangoInit extends Command {
 
       const scriptPath = this.locateScript();
 
-      const scriptArgs = [projectName, flags.db, flags.dockerfile ? 'yes' : 'no', flags.dockercompose ? 'yes' : 'no', 'no'];
+      const scriptArgs = [projectName, flags.db, flags.dockerfile ? 'y' : 'n', flags.dockercompose ? 'y' : 'n', 'n'];
 
       await this.runScript(scriptPath, scriptArgs);
 

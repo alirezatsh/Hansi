@@ -99,7 +99,9 @@ DB_PORT=5432
 EOL
 fi
 
-GUIDE_DIR="$(cd "$(dirname "$0")" && cd ../../django/guides && pwd 2>/dev/null || true)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+GUIDE_DIR="$SCRIPT_DIR/../../guides/django"
+
 
 echo -e "${GREEN}Copying guide file...${RESET}"
 
@@ -155,16 +157,15 @@ services:
   db:
     image: postgres:15
     environment:
-      POSTGRES_DB: \${DB_NAME}
-      POSTGRES_USER: \${DB_USER}
-      POSTGRES_PASSWORD: \${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5432:5432"
     env_file:
       - .env
   web:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
     ports:
@@ -173,6 +174,9 @@ services:
       - db
     env_file:
       - .env
+    command: >
+      bash -c "sleep 10 && python manage.py runserver 0.0.0.0:8000"
+
 EOL
   echo -e "${GREEN}docker-compose.yml created"
 fi
