@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -euo pipefail
 
 GREEN="\033[0;32m"
@@ -11,6 +11,11 @@ DB_TYPE=${2:-sqlite}
 DOCKERFILE=${3:-n}
 DOCKER_COMPOSE=${4:-n}
 
+PROJECT_DIR="$(pwd)/$PROJECT_NAME"
+SETTINGS_FILE="$PROJECT_DIR/$PROJECT_NAME/settings.py"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+GUIDE_DIR="$SCRIPT_DIR/../../guides/django"
+
 if [ -z "$PROJECT_NAME" ]; then
   echo -e "${RED}Usage: $0 PROJECT_NAME [sqlite|postgres] [dockerfile y/n] [docker_compose y/n] ${RESET}"
   exit 1
@@ -21,7 +26,6 @@ if [ -d "$PROJECT_NAME" ]; then
   exit 1
 fi
 
-PROJECT_DIR="$(pwd)/$PROJECT_NAME"
 
 echo -e "${GREEN}Creating project directory and virtual environment...${RESET}"
 mkdir -p "$PROJECT_NAME"
@@ -29,6 +33,9 @@ python3 -m venv "$PROJECT_NAME/venv"
 
 echo -e "${GREEN}Activating virtual environment...${RESET}"
 source "$PROJECT_NAME/venv/bin/activate"
+
+pip install django psycopg2-binary
+
 
 # Create requirements.txt 
 cat > "$PROJECT_DIR/requirements.txt" <<PY
@@ -56,14 +63,12 @@ Pillow==11.3.0
 PY
 
 echo -e "${GREEN}Installing required Python packages from requirements.txt...${RESET}"
-python -m pip install --upgrade pip
-python -m pip install --no-cache-dir -r "$PROJECT_DIR/requirements.txt"
+
 
 echo -e "${GREEN}Starting Django project...${RESET}"
 django-admin startproject "$PROJECT_NAME" "$PROJECT_NAME"
 cd "$PROJECT_DIR" || exit 1
 
-SETTINGS_FILE="$PROJECT_DIR/$PROJECT_NAME/settings.py"
 
 # PostgreSQL settings
 if [ "$DB_TYPE" = "postgres" ]; then
@@ -98,8 +103,6 @@ DB_PORT=5432
 EOL
 fi
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-GUIDE_DIR="$SCRIPT_DIR/../../guides/django"
 
 echo -e "${GREEN}Copying guide file...${RESET}"
 
@@ -119,6 +122,7 @@ fi
 if [ "$DB_TYPE" = "sqlite" ] && [ "$DOCKERFILE" != "y" ] && [ "$DOCKER_COMPOSE" != "y" ]; then
   echo -e "${GREEN}Running migrations for SQLite...${RESET}"
   python manage.py migrate
+  python manage.py createsuperuser
 else
   echo -e "${YELLOW}Skipping migrations (PostgreSQL or Docker).${RESET}"
 fi
@@ -156,7 +160,10 @@ if [ "$DOCKERFILE" = "y" ] && [ "$DOCKER_COMPOSE" != "y" ]; then
   echo -e "${GREEN}Waiting for Django to be ready...${RESET}"
   sleep 5
   docker exec "$PROJECT_NAME" python manage.py migrate
+
 fi
+
+docker pull postgres:16
 
 # docker-compose.yml
 if [ "$DOCKER_COMPOSE" = "y" ]; then
@@ -164,7 +171,8 @@ if [ "$DOCKER_COMPOSE" = "y" ]; then
 version: "3.9"
 services:
   db:
-    image: postgres:15
+    image: postgres:16
+    restart: always
     environment:
       POSTGRES_DB: ${PROJECT_NAME}_db
       POSTGRES_USER: postgres
@@ -173,18 +181,34 @@ services:
       - "5432:5432"
     env_file:
       - .env
+    volumes:
+      - ${PROJECT_NAME}_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 5
+      start_period: 5s
+      timeout: 5s
+
   web:
     build: .
+    image: ${PROJECT_NAME}_web:latest
     volumes:
       - .:/app
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     env_file:
       - .env
-    command: >
-      bash -c "sleep 10 && python manage.py runserver 0.0.0.0:8000"
+    command: python manage.py runserver 0.0.0.0:8000
+    restart: always
+
+volumes:
+  ${PROJECT_NAME}_db_data:
+
+
 EOL
   echo -e "${GREEN}docker-compose.yml created${RESET}"
 
@@ -204,4 +228,4 @@ echo -e "${GREEN}Django project '$PROJECT_NAME' setup completed.${RESET}"
 sleep 1
 echo -e "${GREEN}Project '${PROJECT_NAME}' created successfully!${RESET}"
 sleep 3
-echo -e "${GREEN}Check guide.txt for more information.${RESET}"
+echo -e "${GREEN}We created a guide.txt file. Please Check it for more information.${RESET}"

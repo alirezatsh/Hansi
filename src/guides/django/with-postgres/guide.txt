@@ -1,5 +1,9 @@
 Django Project Guide - PostgreSQL
 
+Activate your virtual environment:
+Linux/macOS:
+  source ./venv/bin/activate
+
 Database:
 You selected PostgreSQL.
 No migrations were run automatically.
@@ -7,12 +11,6 @@ Make sure your PostgreSQL server is running.
 Update your .env with correct DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT.
 After the DB is ready, run:
   python manage.py migrate
-
-Activate your virtual environment:
-Linux/macOS:
-  source ./venv/bin/activate
-Windows:
-  .\venv\Scripts\activate
 
 Create superuser:
   python manage.py createsuperuser

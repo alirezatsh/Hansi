@@ -3,12 +3,11 @@ Django Project Guide - SQLite with Docker
 Database:
 You selected SQLite.
 The database file will be created automatically inside the project.
-
-
+The migrations were run automatically.
 A Docker container has been created and is running your Django project.
 
-The application is accessible at:
-  http://localhost:8000
+Your project is up. You can go to http://localhost:8000 to see it.
+
 
 No need to run the server manually.
 Create superuser inside the container if needed:

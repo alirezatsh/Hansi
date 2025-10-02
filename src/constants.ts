@@ -8,5 +8,3 @@ export const DJANGO_SCRIPT_CANDIDATES = [
 
 export const SCRIPT_SEARCH_TRY_LIMIT = 200;
 
-export const DJANGO_PORT = '8000:8000';
-
