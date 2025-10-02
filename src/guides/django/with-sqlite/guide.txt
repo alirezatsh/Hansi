@@ -3,13 +3,13 @@ Django Project Guide - SQLite
 Database:
 You selected SQLite on your system.
 The database file will be created automatically inside the project.
-The migrations were run automatically.
+The migrations were run automatically and you created you superuser.
 
 Activate your virtual environment:
 Linux/macOS:
   source ./venv/bin/activate
 
-we installed only neccessory packages (django - psycopg) but other packages are in requirements.tx.
+we installed only neccessory packages (django - psycopg) but other packages are in requirements.txt file.
 you can install it with this command:
   pip install -r requirements.txt
 
