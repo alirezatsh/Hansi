@@ -10,10 +10,9 @@ PROJECT_NAME=$1
 DB_TYPE=${2:-sqlite}
 DOCKERFILE=${3:-n}
 DOCKER_COMPOSE=${4:-n}
-SUPERUSER=${5:-n}
 
 if [ -z "$PROJECT_NAME" ]; then
-  echo -e "${RED}Usage: $0 PROJECT_NAME [sqlite|postgres] [dockerfile y/n] [docker_compose y/n] [superuser y/n]${RESET}"
+  echo -e "${RED}Usage: $0 PROJECT_NAME [sqlite|postgres] [dockerfile y/n] [docker_compose y/n] ${RESET}"
   exit 1
 fi
 
@@ -31,7 +30,7 @@ python3 -m venv "$PROJECT_NAME/venv"
 echo -e "${GREEN}Activating virtual environment...${RESET}"
 source "$PROJECT_NAME/venv/bin/activate"
 
-# Create requirements.txt with essential packages for Django project 
+# Create requirements.txt 
 cat > "$PROJECT_DIR/requirements.txt" <<PY
 Django==4.2.24
 djangorestframework==3.16.1
@@ -66,7 +65,7 @@ cd "$PROJECT_DIR" || exit 1
 
 SETTINGS_FILE="$PROJECT_DIR/$PROJECT_NAME/settings.py"
 
-#  Append PostgreSQL database configuration to settings.py 
+# PostgreSQL settings
 if [ "$DB_TYPE" = "postgres" ]; then
   echo -e "${YELLOW}Configuring PostgreSQL settings (no connection attempt)...${RESET}"
   cat >> "$SETTINGS_FILE" <<'PY'
@@ -88,7 +87,7 @@ DATABASES = {
 PY
 fi
 
-# Generate .env file with default PostgreSQL environment variables 
+# Generate .env 
 if [ ! -f "$PROJECT_DIR/.env" ]; then
   cat > "$PROJECT_DIR/.env" <<EOL
 DB_NAME=${PROJECT_NAME}_db
@@ -102,7 +101,6 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 GUIDE_DIR="$SCRIPT_DIR/../../guides/django"
 
-
 echo -e "${GREEN}Copying guide file...${RESET}"
 
 if [ "$DOCKER_COMPOSE" = "y" ]; then
@@ -113,15 +111,13 @@ elif [ "$DB_TYPE" = "sqlite" ] && [ "$DOCKERFILE" != "y" ]; then
 
 elif [ "$DB_TYPE" = "postgres" ]; then
   cp "$GUIDE_DIR/with-postgres/guide.txt" "$PROJECT_DIR/guide.txt" 2>/dev/null || true
-  
+
 elif [ "$DB_TYPE" = "sqlite" ] && [ "$DOCKERFILE" = "y" ]; then
   cp "$GUIDE_DIR/with-sqlite-dockerfile/guide.txt" "$PROJECT_DIR/guide.txt" 2>/dev/null || true
 fi
 
 if [ "$DB_TYPE" = "sqlite" ] && [ "$DOCKERFILE" != "y" ] && [ "$DOCKER_COMPOSE" != "y" ]; then
   echo -e "${GREEN}Running migrations for SQLite...${RESET}"
-
-# Run initial migrations automatically only if SQLite is used
   python manage.py migrate
 else
   echo -e "${YELLOW}Skipping migrations (PostgreSQL or Docker).${RESET}"
@@ -136,7 +132,7 @@ db.sqlite3
 .env
 PY
 
-#  Create Dockerfile for building and running the Django app inside container 
+# Dockerfile
 if [ "$DOCKERFILE" = "y" ] || [ "$DOCKER_COMPOSE" = "y" ]; then
   cat > "$PROJECT_DIR/Dockerfile" <<'PY'
 FROM python:3.12-slim
@@ -146,10 +142,23 @@ RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 COPY . /app
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 PY
-  echo -e "${GREEN}Dockerfile created"
+  echo -e "${GREEN}Dockerfile created${RESET}"
 fi
 
-# Create docker-compose.yml to orchestrate Django and PostgreSQL services 
+# docker build when dockerfile=y but no docker-compose
+if [ "$DOCKERFILE" = "y" ] && [ "$DOCKER_COMPOSE" != "y" ]; then
+  echo -e "${GREEN}Building Docker image for $PROJECT_NAME...${RESET}"
+  docker build -t "$PROJECT_NAME:latest" "$PROJECT_DIR"
+
+  echo -e "${GREEN}Running container for $PROJECT_NAME...${RESET}"
+  docker run -d --name "$PROJECT_NAME" -p 8000:8000 "$PROJECT_NAME:latest"
+
+  echo -e "${GREEN}Waiting for Django to be ready...${RESET}"
+  sleep 5
+  docker exec "$PROJECT_NAME" python manage.py migrate
+fi
+
+# docker-compose.yml
 if [ "$DOCKER_COMPOSE" = "y" ]; then
   cat > "$PROJECT_DIR/docker-compose.yml" <<EOL
 version: "3.9"
@@ -157,9 +166,9 @@ services:
   db:
     image: postgres:15
     environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${PROJECT_NAME}_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
     env_file:
@@ -176,9 +185,19 @@ services:
       - .env
     command: >
       bash -c "sleep 10 && python manage.py runserver 0.0.0.0:8000"
-
 EOL
-  echo -e "${GREEN}docker-compose.yml created"
+  echo -e "${GREEN}docker-compose.yml created${RESET}"
+
+  echo -e "${GREEN}Building and starting containers...${RESET}"
+  docker compose up -d --build
+  
+  sleep 5
+ 
+  echo -e "${GREEN}Running Django migrations inside container...${RESET}"
+  docker compose exec web python manage.py migrate
+
+  echo -e "${GREEN}Creating Django superuser inside container...${RESET}"
+  docker compose exec -it web python manage.py createsuperuser || true
 fi
 
 echo -e "${GREEN}Django project '$PROJECT_NAME' setup completed.${RESET}"

@@ -10,7 +10,6 @@ import {
   DjangoDockerOptions,
 } from '../../../interfaces/django-interfaces.js';
 import { DJANGO_SCRIPT_CANDIDATES , SCRIPT_SEARCH_TRY_LIMIT } from '../../../constants.js';
-import { handleDockerForProject } from '../../../docker/django/run.js';
 
 export default class DjangoInit extends Command {
   static description = 'Initialize a Django project with optional DB, Docker, and docker-compose';
@@ -102,7 +101,6 @@ export default class DjangoInit extends Command {
         dockercompose: !!flags.dockercompose,
       };
 
-      handleDockerForProject(dockerOptions);
     } catch (err: any) {
       this.error(err?.message ?? String(err));
     }
