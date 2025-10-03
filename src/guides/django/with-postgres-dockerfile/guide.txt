@@ -1,0 +1,33 @@
+Django Project Guide - PostgreSQL + Dockerfile
+
+Database:
+You selected PostgreSQL.
+No migrations have been run automatically.
+No superuser has been created.
+
+1. Update your .env file with your local database settings:
+   DB_NAME=<YOUR_DB_NAME>
+   DB_USER=<YOUR_DB_USER>
+   DB_PASSWORD=<YOUR_DB_PASSWORD>
+   DB_HOST=<YOUR_DB_HOST>
+   DB_PORT=<YOUR_DB_PORT>
+
+2. Build Docker image:
+   docker build -t <PROJECT_NAME>:latest .
+
+3. Run a container interactively to perform migrations and create superuser:
+   docker run -it --rm \
+     -e DB_NAME=<YOUR_DB_NAME> \
+     -e DB_USER=<YOUR_DB_USER> \
+     -e DB_PASSWORD=<YOUR_DB_PASSWORD> \
+     -e DB_HOST=<YOUR_DB_HOST> \
+     -e DB_PORT=<YOUR_DB_PORT> \
+     <PROJECT_NAME>:latest bash
+
+4. Inside the container, run migrations:
+   python manage.py migrate
+
+5. Create Django superuser:
+   python manage.py createsuperuser
+
+After that, Your project is up. You can go to http://localhost:8000 to see it.

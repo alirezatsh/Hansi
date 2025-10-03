@@ -125,22 +125,27 @@ copy_guide() {
   elif [ "$DB_TYPE" = "sqlite" ] && [ "$DOCKERFILE" != "y" ]; then
     cp "$GUIDE_DIR/with-sqlite/guide.txt" "$PROJECT_DIR/guide.txt" 2>/dev/null || true
 
-  elif [ "$DB_TYPE" = "postgres" ]; then
+  elif [ "$DB_TYPE" = "postgres" ] && [ "$DOCKERFILE" != "y" ]; then
     cp "$GUIDE_DIR/with-postgres/guide.txt" "$PROJECT_DIR/guide.txt" 2>/dev/null || true
     
   elif [ "$DB_TYPE" = "sqlite" ] && [ "$DOCKERFILE" = "y" ]; then
     cp "$GUIDE_DIR/with-sqlite-dockerfile/guide.txt" "$PROJECT_DIR/guide.txt" 2>/dev/null || true
+
+  elif [ "$DB_TYPE" = "postgres" ] && [ "$DOCKERFILE" = "y" ]; then
+    cp "$GUIDE_DIR/with-postgres-dockerfile/guide.txt" "$PROJECT_DIR/guide.txt" 2>/dev/null || true
   fi
 }
 
 run_migrations() {
   if [ "$DB_TYPE" = "sqlite" ] && [ "$DOCKERFILE" != "y" ] && [ "$DOCKER_COMPOSE" != "y" ]; then
     echo -e "${GREEN}Running migrations for SQLite (local environment)...${RESET}"
-    python manage.py migrate
-    sleep 1
-    python manage.py createsuperuser
+
   elif [ "$DB_TYPE" = "postgres" ] && [ "$DOCKER_COMPOSE" != "y" ]; then
     echo -e "${YELLOW}Skipping migrations (You can run it after configuration).${RESET}"
+    
+  elif [ "$DOCKERFILE" = "y" ] && [ "$DB_TYPE" = "sqlite" ]; then
+    echo -e "${GREEN}Migrations and superuser will be handled inside Docker container...${RESET}"
+
   elif [ "$DOCKER_COMPOSE" = "y" ]; then
     echo -e "${YELLOW}Migrations will be handled inside docker compose.${RESET}"
   fi
@@ -162,6 +167,14 @@ create_dockerfile() {
     cat > "$PROJECT_DIR/Dockerfile" <<'PY'
 FROM python:3.12-slim
 WORKDIR /app
+ENV TZ="Asia/Tehran"
+RUN apt-get update && apt-get install -y \
+    iputils-ping \
+    curl \
+    netcat-traditional \
+    nano \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt /app/requirements.txt
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 COPY . /app
@@ -172,16 +185,36 @@ PY
 }
 
 build_and_run_docker() {
-  if [ "$DOCKERFILE" = "y" ] && [ "$DOCKER_COMPOSE" != "y" ]; then
+  if [ "$DOCKERFILE" = "y" ] && [ "$DB_TYPE" = "sqlite" ] && [ "$DOCKER_COMPOSE" != "y" ]; then
     echo -e "${GREEN}Building Docker image for $PROJECT_NAME...${RESET}"
     docker build -t "$PROJECT_NAME:latest" "$PROJECT_DIR"
 
-    echo -e "${GREEN}Running container for $PROJECT_NAME...${RESET}"
-    docker run -d --name "$PROJECT_NAME" -p 8000:8000 "$PROJECT_NAME:latest"
+    # ensure host db file exists and has permissive mode so Docker bind-mount won't create a directory
+    mkdir -p "$PROJECT_DIR"
+    if [ ! -f "$PROJECT_DIR/db.sqlite3" ]; then
+      touch "$PROJECT_DIR/db.sqlite3"
+      chmod 666 "$PROJECT_DIR/db.sqlite3"
+    else
+      chmod 666 "$PROJECT_DIR/db.sqlite3" || true
+    fi
+
+    echo -e "${GREEN}Running container for $PROJECT_NAME with mounted SQLite...${RESET}"
+    docker run -d \
+      --name "$PROJECT_NAME" \
+      -p 8000:8000 \
+      -v "$PROJECT_DIR/db.sqlite3:/app/db.sqlite3" \
+      "$PROJECT_NAME:latest"
 
     echo -e "${GREEN}Waiting for Django to be ready...${RESET}"
     sleep 5
-    docker exec "$PROJECT_NAME" python manage.py migrate
+
+    echo -e "${GREEN}Running migrations inside container...${RESET}"
+    docker exec -it "$PROJECT_NAME" python manage.py migrate
+
+    echo -e "${GREEN}Creating Django superuser inside container...${RESET}"
+    docker exec -it "$PROJECT_NAME" python manage.py createsuperuser || true
+  elif [ "$DOCKER_COMPOSE" = "y" ]; then
+    echo -e "${YELLOW}Docker Compose will handle migrations.${RESET}"
   fi
 }
 
