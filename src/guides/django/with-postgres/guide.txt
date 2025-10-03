@@ -7,7 +7,6 @@ Linux/macOS:
 Database:
 You selected PostgreSQL.
 No migrations were run automatically.
-Make sure your PostgreSQL server is running.
 Update your .env with correct DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT.
 After the DB is ready, run:
   python manage.py migrate
@@ -17,3 +16,7 @@ Create superuser:
 
 Run server:
   python manage.py runserver
+
+we installed only neccessory packages (django - psycopg) but other packages are in requirements.txt file.
+you can install it with this command:
+  pip install -r requirements.txt

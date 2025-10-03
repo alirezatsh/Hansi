@@ -1,8 +1,5 @@
 Django Project Guide - PostgreSQL + docker compose + Dockerfile
 
-Prerequisites:
-- Docker and Docker Compose installed and running.
-- PostgreSQL is chosen as the database.
 
 Running the Project:
 Your project is up. You can go to http://localhost:8000 to see it.

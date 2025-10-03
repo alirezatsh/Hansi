@@ -16,13 +16,13 @@ No superuser has been created.
    docker build -t <PROJECT_NAME>:latest .
 
 3. Run a container interactively to perform migrations and create superuser:
-   docker run -it --rm \
+   docker run -itd \
      -e DB_NAME=<YOUR_DB_NAME> \
      -e DB_USER=<YOUR_DB_USER> \
      -e DB_PASSWORD=<YOUR_DB_PASSWORD> \
      -e DB_HOST=<YOUR_DB_HOST> \
      -e DB_PORT=<YOUR_DB_PORT> \
-     <PROJECT_NAME>:latest bash
+     <PROJECT_NAME>:latest
 
 4. Inside the container, run migrations:
    python manage.py migrate

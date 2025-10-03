@@ -1,7 +1,7 @@
 {
   "name": "hansi",
-  "description": "This is CLI tool for setup and structuring your projects",
-  "version": "0.0.1",
+  "description": "This is a CLI tool to quickly initialize, configure, and structure your projects.",
+  "version": "0.0.8",
   "author": "alireza tashakkori",
   "bin": {
     "hansi": "./bin/run.js"

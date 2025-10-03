@@ -1,9 +1,9 @@
 Django Project Guide - SQLite
 
 Database:
-You selected SQLite on your system.
+You selected SQLite for this project.
 The database file will be created automatically inside the project.
-The migrations were run automatically and you created you superuser.
+The migrations were run automatically and you created your superuser.
 
 Activate your virtual environment:
 Linux/macOS:
