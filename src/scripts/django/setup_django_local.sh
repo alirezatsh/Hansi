@@ -139,6 +139,9 @@ copy_guide() {
 run_migrations() {
   if [ "$DB_TYPE" = "sqlite" ] && [ "$DOCKERFILE" != "y" ] && [ "$DOCKER_COMPOSE" != "y" ]; then
     echo -e "${GREEN}Running migrations for SQLite (local environment)...${RESET}"
+    python manage.py migrate
+    sleep 1
+    python manage.py createsuperuser
 
   elif [ "$DB_TYPE" = "postgres" ] && [ "$DOCKER_COMPOSE" != "y" ]; then
     echo -e "${YELLOW}Skipping migrations (You can run it after configuration).${RESET}"
@@ -225,6 +228,7 @@ version: "3.9"
 services:
   db:
     image: postgres:16
+    container_name: ${PROJECT_NAME}_db
     restart: always
     environment:
       POSTGRES_DB: ${PROJECT_NAME}_db
@@ -246,6 +250,7 @@ services:
   web:
     build: .
     image: ${PROJECT_NAME}_web:latest
+    container_name: ${PROJECT_NAME}_web
     volumes:
       - .:/app
     ports:
