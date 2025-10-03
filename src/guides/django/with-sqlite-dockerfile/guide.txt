@@ -2,10 +2,14 @@ Django Project Guide - SQLite with Docker
 
 Database:
 You selected SQLite.
-The database file will be created automatically and mount tor the container.
+The database file will be created automatically and mount to the container.
 The migrations were run automatically.
 You created the superuser inside the container.
 A Docker container has been created and is running your Django project.
+
+Viewing Server Logs:
+- To see Django running logs:
+    docker logs -f <app-container-name>
 
 Your project is up. You can go to http://localhost:8000 to see it.
 

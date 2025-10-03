@@ -1,15 +1,27 @@
-hansi
+# hansi  
+
+Have you ever struggled with setting up a new project?  
+Was it difficult to configure everything and create all the files manually?  
+Have you ever wished you could bootstrap your entire project with just a single command?  
+
+Now you can — with **hansi**.  
 
 **hansi** is a CLI tool for fast bootstrapping and structuring your projects.  
-It helps you quickly set up frameworks like **Django, FastAPI(soon), and Node.js(soon)**, and provides a clean, local-development-ready structure out of the box.  
-
+It helps you quickly set up frameworks like **Django**, and soon also **FastAPI** and **Node.js**, while providing a clean, local-development-ready structure right out of the box.  
+  
 
 
 ## Features  
 
-- Quick and easy project initialization  
+- Fast and easy project initialization  
 - Database options: **SQLite** or **PostgreSQL**  
-- Built-in support for **Docker** and **Docker Compose**  
+- Optional setup with **Dockerfile** and **Docker Compose** 
+- Automatically handles essentials:
+  - Create and activate the venv 
+  - Runs migrations  
+  - Creates a superuser  
+  - Generates necessary files like **.gitignore** and **.env**  
+  - Creates a `requirements.txt` file with the most used packages  
 
 
 

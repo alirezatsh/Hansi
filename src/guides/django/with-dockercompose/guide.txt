@@ -14,7 +14,7 @@ Virtual Environment:
 - A virtual environment was used for initial project setup, but it is not needed now since everything runs inside the container.
 
 Viewing Server Logs:
-- To see Django server logs inside the container:
+- To see Django running logs:
     docker logs -f <app-container-name>
 
 Summary:

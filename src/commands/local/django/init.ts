@@ -57,7 +57,6 @@ export default class DjangoInit extends Command {
 
     const msg = ['setup_django_local.sh not found. Tried:', ...tried.slice(0, SCRIPT_SEARCH_TRY_LIMIT)].join('\n  ');
     this.error(msg);
-    throw new Error(msg);
   }
 
   private async runScript(scriptPath: string, args: string[]): Promise<void> {

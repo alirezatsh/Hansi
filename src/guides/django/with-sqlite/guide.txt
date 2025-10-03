@@ -9,9 +9,9 @@ Activate your virtual environment:
 Linux/macOS:
   source ./venv/bin/activate
 
+Run server:
+  python manage.py runserver
+
 we installed only neccessory packages (django - psycopg) but other packages are in requirements.txt file.
 you can install it with this command:
   pip install -r requirements.txt
-
-Run server:
-  python manage.py runserver
