@@ -17,6 +17,11 @@ Viewing Server Logs:
 - To see Django running logs:
     docker logs -f <app-container-name>
 
+Create Django App:
+You should create the app inside the container. Every app you create will be mounted to the project. Use the following command:
+    docker exec -it <appname-container> python manage.py startapp <appname>
+
+
 Summary:
 1. The project is running with Docker Compose.
 2. Migrations have been applied inside the container.

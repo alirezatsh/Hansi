@@ -11,6 +11,10 @@ Viewing Server Logs:
 - To see Django running logs:
     docker logs -f <app-container-name>
 
+Create Django App:
+You should create the app inside the container. Every app you create will be mounted to the project. Use the following command:
+    docker exec -it <appname-container> python manage.py startapp <appname>
+
 Your project is up. You can go to http://localhost:8000 to see it.
 
 No need to run the server manually.

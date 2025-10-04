@@ -79,6 +79,7 @@ start_django_project() {
 
 configure_postgres() {
   if [ "$DB_TYPE" = "postgres" ]; then
+  sed -i "/^DATABASES = {/,/^}/d" "$SETTINGS_FILE"
     if [ "$DOCKER_COMPOSE" = "y" ]; then
       echo -e "${YELLOW}Configuring PostgreSQL settings (waiting for connection with Docker)...${RESET}"
     else

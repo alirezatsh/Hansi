@@ -30,4 +30,8 @@ No superuser has been created.
 5. Create Django superuser:
    python manage.py createsuperuser
 
+Create Django App:
+You should create the app inside the container. Every app you create will be mounted to the project. Use the following command:
+    docker exec -it <appname-container> python manage.py startapp <appname>
+
 After that, Your project is up. You can go to http://localhost:8000 to see it.
